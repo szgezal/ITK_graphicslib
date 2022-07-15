@@ -3,6 +3,7 @@
 
 #include <string>
 #include <vector>
+#include <SDL_keycode.h>
 
 struct SDL_Surface;
 struct SDL_Window;
@@ -29,8 +30,20 @@ public:
     void draw_dot();
     void draw_line(int x, int y);
     void draw_box(int x, int y);
+
     void draw_text(const std::string& str);
-    void blitfrom(const canvas &c, short x1, short y1, unsigned short x2, unsigned short y2, short x3, short y3);
+    void blitfrom(const canvas &c, short x1, short y1, short x2, short y2, short x3, short y3);
+
+    // új --------------------------------------------------------------
+    void draw_circle(int x, int y, int r);
+    void draw_ellipse(int x, int y, int a, int b);
+    void rotate(double angle);
+    void set_origin(short _ox, short _oy);
+    int orig_x() const { return ox; }
+    int orig_y() const { return oy; }
+    double get_angle() const { return angle; }
+    void set_angle(double _angle) { angle = _angle; }
+    // új --------------------------------------------------------------
 
     bool load_font(const std::string& fname, int fontsize = 16, bool antialias=true);
     void set_antialias(bool antialias) {antialiastext=antialias;}
@@ -62,6 +75,12 @@ protected:
 		if (a>0) return 1;
 		return 0;
     }
+
+    // új --------------------------------------------------------------
+    short ox;
+    short oy;
+    double angle;
+    // új --------------------------------------------------------------
 
     short pt_x;
     short pt_y;
@@ -131,8 +150,6 @@ struct color
     { out.set_color(red, green, blue); }
 };
 
-
-
 struct move
 {
     int vec_x, vec_y;
@@ -189,6 +206,42 @@ struct text
     void operator () (canvas& out)
     { out.draw_text(str); }
 };
+
+// új --------------------------------------------------------------
+struct circle {
+    int pos_x, pos_y, radius;
+    circle(int x, int y, int r) : pos_x(x), pos_y(y), radius(r) {}
+    void operator () (canvas& out) {
+        out.draw_circle(pos_x, pos_y, radius);
+    }
+};
+
+struct ellipse {
+    int pos_x, pos_y, a, b;
+    ellipse(int x, int y, int _a, int _b) : pos_x(x), pos_y(y), a(_a), b(_b) {}
+    void operator () (canvas& out) {
+        out.draw_ellipse(pos_x, pos_y, a, b);
+    }
+};
+
+struct origin{
+    short ox, oy;
+    origin(short _ox, short _oy) : ox(_ox), oy(_oy) {}
+    void operator () (canvas& out) {
+        out.set_origin(ox, oy);
+    }
+};
+
+struct rotate{
+    double angle;
+    rotate(double _angle) : angle(_angle) {}
+    void operator () (canvas& out) {
+        out.rotate(angle);
+    }
+};
+// új --------------------------------------------------------------
+
+
 /*
 struct title
 {
@@ -214,14 +267,49 @@ struct font
 
 // Keycode constants
 enum keycode_t {
-    key_tab = '\t', key_backspace = '\b', key_enter = '\r',
-    key_escape = '\033', key_space = ' ',
-    key_up = 0x10000, key_down, key_right, key_left,
-    key_insert, key_delete, key_home, key_end, key_pgup, key_pgdn,
-    key_lshift, key_rshift, key_lctrl, key_rctrl, key_lalt, key_ralt,
-    key_lwin, key_rwin, key_menu, key_numl, key_capsl, key_scrl,
-    key_f0 = 0x20000, key_f1, key_f2, key_f3, key_f4, key_f5, key_f6, key_f7,
-    key_f8, key_f9, key_f10, key_f11, key_f12, key_f13, key_f14, key_f15
+    key_tab = SDLK_TAB,
+    key_backspace = SDLK_BACKSPACE,
+    key_enter = SDLK_RETURN,
+    key_escape = SDLK_ESCAPE,
+    key_space = SDLK_SPACE,
+    key_up = SDL_SCANCODE_UP,
+    key_down = SDL_SCANCODE_DOWN,
+    key_right = SDL_SCANCODE_RIGHT,
+    key_left = SDL_SCANCODE_LEFT,
+    key_insert = SDL_SCANCODE_INSERT,
+    key_delete = 65541,
+    key_home = SDL_SCANCODE_HOME,
+    key_end = SDL_SCANCODE_END,
+    key_pgup = SDL_SCANCODE_PAGEUP,
+    key_pgdn = SDL_SCANCODE_PAGEDOWN,
+    key_lshift = SDL_SCANCODE_LSHIFT,
+    key_rshift = SDL_SCANCODE_RSHIFT,
+    key_lctrl = 65548,
+    key_rctrl = SDL_SCANCODE_RCTRL,
+    key_lalt = 65550,
+    key_ralt = SDL_SCANCODE_RALT,
+    key_lwin,
+    key_rwin,
+    key_menu = SDL_SCANCODE_MENU,
+    key_numl = SDL_SCANCODE_NUMLOCKCLEAR,
+    key_capsl = SDL_SCANCODE_CAPSLOCK,
+    key_scrl = SDL_SCANCODE_SCROLLLOCK,
+    key_f0 = 0x20000,
+    key_f1 = SDL_SCANCODE_F1,
+    key_f2 = SDL_SCANCODE_F2,
+    key_f3 = SDL_SCANCODE_F3,
+    key_f4 = SDL_SCANCODE_F4,
+    key_f5 = SDL_SCANCODE_F5,
+    key_f6 = SDL_SCANCODE_F6,
+    key_f7 = SDL_SCANCODE_F7,
+    key_f8 = SDL_SCANCODE_F8,
+    key_f9 = SDL_SCANCODE_F9,
+    key_f10 = SDL_SCANCODE_F10,
+    key_f11 = SDL_SCANCODE_F11,
+    key_f12 = SDL_SCANCODE_F12,
+    key_f13 = SDL_SCANCODE_F13,
+    key_f14 = SDL_SCANCODE_F14,
+    key_f15 = SDL_SCANCODE_F15
 };
 
 enum button_t {

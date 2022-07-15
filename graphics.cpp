@@ -3,6 +3,7 @@
 #include <SDL2/SDL_ttf.h>
 
 #include <cstdlib>
+#include <math.h>
 #include <algorithm>
 #include <map>
 #include <iostream>
@@ -276,6 +277,8 @@ bool genv::canvas::move_point(int x, int y)
 
 void genv::canvas::draw_dot()
 {
+    if (pt_x < 0 || pt_y < 0 || pt_x >= buf->w || pt_y >= buf->h)
+        return;
     pixel(buf, pt_x, pt_y) = draw_clr;
 }
 
@@ -346,6 +349,62 @@ void genv::canvas::draw_box(int x, int y)
     SDL_FillRect(buf, &r, draw_clr);
 }
 
+// új --------------------------------------------------------------
+void genv::canvas::draw_circle(int x, int y, int r) {
+    pt_x = ox + x;
+    pt_y = oy + y;
+
+    for (int i = -r; i <= r; i++)
+        for (int j = -r; j <= r; j++)
+            if (i*i + j*j <= r*r && move_point(i, j)) {
+                draw_dot();
+                move_point(-i, -j);
+            }
+}
+
+void genv::canvas::draw_ellipse(int x, int y, int a, int b) {
+    pt_x = ox + x;
+    pt_y = oy + y;
+
+    if (pt_x < 0 + a || pt_y < 0 + b || pt_x >= buf->w - a || pt_y >= buf->h - b)
+        return;
+
+    for (int i = -a; i <= a; i++)
+        for (int j = -b; j <= b; j++)
+            if ( ( (i*i)/(double)(a*a) ) + ( (j*j)/(double)(b*b) ) <= 1 && move_point(i, j) ) {
+                draw_dot();
+                move_point(-i, -j);
+            }
+}
+
+void genv::canvas::set_origin(short _ox, short _oy) {
+    static canvas* c = new canvas();
+    c->buf = buf;
+    //gout << color(0, 0, 0) << move_to(0, 0) << box(buf->w, buf->h);
+    gout << stamp(*c, 0, 0, buf->w, buf->h, _ox - ox, _oy - oy);
+
+    ox = _ox;
+    oy = _oy;
+}
+
+double rotation_x(int x, int y, double _angle) {
+    return x*cos(_angle) + y*sin(_angle);
+}
+
+double rotation_y(int x, int y, double _angle) {
+    return -x*sin(_angle) + y*cos(_angle);
+}
+
+void genv::canvas::rotate(double _angle) {
+    static canvas* c = new canvas();
+    c->buf = buf;
+    // itt canvas forgatás lesz előző függvényekkel
+    gout << stamp(*c, 0, 0, buf->w, buf->h, 0, 0);
+
+    this->set_angle(this->get_angle() + _angle);
+}
+// új --------------------------------------------------------------
+
 void genv::canvas::draw_text(const std::string& str)
 {
 	if (str=="") return;
@@ -407,7 +466,7 @@ void genv::canvas::draw_text(const std::string& str)
     }
 }
 
-void genv::canvas::blitfrom(const genv::canvas &c, short x1, short y1, unsigned short x2, unsigned short y2, short x3, short y3) {
+void genv::canvas::blitfrom(const genv::canvas &c, short x1, short y1, short x2, short y2, short x3, short y3) {
     if (x1==-1) x1=0;
     if (y1==-1) y1=0;
     if (x2==-1) x2=c.buf->w;
